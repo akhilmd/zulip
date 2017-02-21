@@ -15,6 +15,7 @@ from zerver.lib.actions import (
     do_set_realm_restricted_to_domain,
     do_set_realm_default_language,
     do_set_realm_waiting_period_threshold,
+    do_set_realm_notifications_stream,
     do_set_realm_authentication_methods
 )
 from zerver.lib.i18n import get_available_language_codes
@@ -35,8 +36,9 @@ def update_realm(request, user_profile, name=REQ(validator=check_string, default
                  message_content_edit_limit_seconds=REQ(converter=to_non_negative_int, default=None),
                  default_language=REQ(validator=check_string, default=None),
                  waiting_period_threshold=REQ(converter=to_non_negative_int, default=None),
+                 notifications_stream_name=REQ(validator=check_string, default=None),
                  authentication_methods=REQ(validator=check_dict([]), default=None)):
-    # type: (HttpRequest, UserProfile, Optional[str], Optional[bool], Optional[bool], Optional[bool], Optional[bool], Optional[bool], Optional[bool], Optional[int], Optional[str], Optional[int], Optional[dict]) -> HttpResponse
+    # type: (HttpRequest, UserProfile, Optional[str], Optional[bool], Optional[bool], Optional[bool], Optional[bool], Optional[bool], Optional[bool], Optional[int], Optional[str], Optional[int], Optional[str], Optional[dict]) -> HttpResponse
     # Validation for default_language
     if default_language is not None and default_language not in get_available_language_codes():
         raise JsonableError(_("Invalid language '%s'" % (default_language,)))
@@ -83,4 +85,7 @@ def update_realm(request, user_profile, name=REQ(validator=check_string, default
     if waiting_period_threshold is not None and realm.waiting_period_threshold != waiting_period_threshold:
         do_set_realm_waiting_period_threshold(realm, waiting_period_threshold)
         data['waiting_period_threshold'] = waiting_period_threshold
+    if notifications_stream_name is not None and realm.notifications_stream.name != notifications_stream_name:
+        do_set_realm_notifications_stream(realm, notifications_stream_name)
+        data['notifications_stream_name'] = notifications_stream_name
     return json_success(data)

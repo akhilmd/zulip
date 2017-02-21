@@ -11,6 +11,7 @@
     <div class="alert" id="admin-realm-message-editing-status"></div>
     <div class="alert" id="admin-realm-default-language-status"></div>
     <div class="alert" id="admin-realm-waiting_period_threshold_status"></div>
+    <div class="alert" id="admin-realm-notifications-stream-status"></div>
 
     <div class="input-group admin-realm">
       <label for="realm_name">{{t "Your organization's name" }}</label>
@@ -102,6 +103,14 @@
              name="realm_waiting_period_threshold"
              class="admin-realm-message-content-edit-limit-minutes"
              value="{{ realm_waiting_period_threshold }}"/>
+    </div>
+    <div class="input-group">
+      <label for="realm_notifications_stream">{{t "Notifications stream" }}:</label>
+      <select name="realm_notifications_stream" id="id_realm_notifications_stream">
+        {{#each stream_list}}
+        <option value='{{this.name}}'>{{this.name}}</option>
+        {{/each}}
+      </select>
     </div>
     <div class="input-group organization-submission">
       <input type="submit" class="button" value="{{t 'Save changes' }}" />

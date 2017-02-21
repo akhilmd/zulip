@@ -90,6 +90,7 @@ def fetch_initial_state_data(user_profile, event_types, queue_id,
         state['realm_message_content_edit_limit_seconds'] = user_profile.realm.message_content_edit_limit_seconds
         state['realm_default_language'] = user_profile.realm.default_language
         state['realm_waiting_period_threshold'] = user_profile.realm.waiting_period_threshold
+        state['realm_notifications_stream'] = user_profile.realm.notifications_stream
 
     if want('realm_domain'):
         state['realm_domain'] = user_profile.realm.domain

@@ -82,6 +82,8 @@ function dispatch_normal_event(event) {
             admin.reset_realm_default_language();
         } else if (event.op === 'update' && event.property === 'waiting_period_threshold') {
             page_params.realm_waiting_period_threshold = event.value;
+        } else if (event.op === 'update' && event.property === 'notifications_stream_name') {
+            page_params.realm_notifications_stream_name = event.value;
         }
         break;
 

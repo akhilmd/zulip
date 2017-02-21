@@ -586,6 +586,21 @@ def do_set_realm_waiting_period_threshold(realm, threshold):
     )
     send_event(event, active_user_ids(realm))
 
+def do_set_realm_notifications_stream(realm, stream_name):
+    # type: (Realm, Text) -> None
+
+    stream = get_stream(stream_name, realm)
+
+    realm.notifications_stream = stream
+    realm.save(update_fields=['notifications_stream'])
+    event = dict(
+        type="realm",
+        op="update",
+        property="notifications_stream_name",
+        value=stream_name,
+    )
+    send_event(event, active_user_ids(realm))
+
 def do_deactivate_realm(realm):
     # type: (Realm) -> None
     """

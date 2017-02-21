@@ -321,6 +321,7 @@ function _setup_page() {
         language_list: page_params.language_list,
         realm_default_language: page_params.realm_default_language,
         realm_waiting_period_threshold: page_params.realm_waiting_period_threshold,
+        stream_list: stream_data.get_streams_for_settings_page(),
     };
 
     var admin_tab = templates.render('admin_tab', options);
@@ -336,6 +337,7 @@ function _setup_page() {
     $("#admin-realm-message-editing-status").expectOne().hide();
     $("#admin-realm-default-language-status").expectOne().hide();
     $('#admin-realm-waiting_period_threshold_status').expectOne().hide();
+    $("#admin-realm-notifications-stream-status").expectOne().hide();
     $("#admin-emoji-status").expectOne().hide();
     $('#admin-filter-status').expectOne().hide();
     $('#admin-filter-pattern-status').expectOne().hide();
@@ -356,6 +358,7 @@ function _setup_page() {
     }
 
     $("#id_realm_default_language").val(page_params.realm_default_language);
+    $("#id_realm_notifications_stream").val(page_params.realm_notifications_stream_name);
 
     // create loading indicators
     loading.make_indicator($('#admin_page_users_loading_indicator'));
@@ -578,6 +581,7 @@ function _setup_page() {
         var message_editing_status = $("#admin-realm-message-editing-status").expectOne();
         var default_language_status = $("#admin-realm-default-language-status").expectOne();
         var waiting_period_threshold_status = $("#admin-realm-waiting_period_threshold_status").expectOne();
+        var notifications_stream_status = $("#admin-realm-notifications-stream-status").expectOne();
         name_status.hide();
         restricted_to_domain_status.hide();
         invite_required_status.hide();
@@ -588,6 +592,7 @@ function _setup_page() {
         message_editing_status.hide();
         default_language_status.hide();
         waiting_period_threshold_status.hide();
+        notifications_stream_status.hide();
 
         e.preventDefault();
         e.stopPropagation();
@@ -602,6 +607,7 @@ function _setup_page() {
         var new_message_content_edit_limit_minutes = $("#id_realm_message_content_edit_limit_minutes").val();
         var new_default_language = $("#id_realm_default_language").val();
         var new_waiting_period_threshold = $("#id_realm_waiting_period_threshold").val();
+        var new_notifications_stream_name = $("#id_realm_notifications_stream").val();
         var new_auth_methods = {};
         _.each($("#admin_auth_methods_table").find('tr.method_row'), function (method_row) {
             new_auth_methods[$(method_row).data('method')] = $(method_row).find('input').prop('checked');
@@ -633,6 +639,7 @@ function _setup_page() {
                 JSON.stringify(parseInt(new_message_content_edit_limit_minutes, 10) * 60),
             default_language: JSON.stringify(new_default_language),
             waiting_period_threshold: JSON.stringify(parseInt(new_waiting_period_threshold, 10)),
+            notifications_stream_name: JSON.stringify(new_notifications_stream_name),
         };
 
         channel.patch({
@@ -712,6 +719,11 @@ function _setup_page() {
                 if (response_data.waiting_period_threshold !== undefined) {
                     if (response_data.waiting_period_threshold > 0) {
                         ui.report_success(i18n.t("waiting period threshold changed!"), waiting_period_threshold_status);
+                    }
+                }
+                if (response_data.notifications_stream_name !== undefined) {
+                    if (response_data.notifications_stream_name) {
+                        ui.report_success(i18n.t("Notifications stream changed!"), notifications_stream_status);
                     }
                 }
                 // Check if no changes made

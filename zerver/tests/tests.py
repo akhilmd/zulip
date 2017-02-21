@@ -1944,6 +1944,7 @@ class HomeTest(ZulipTestCase):
             "realm_invite_required",
             "realm_message_content_edit_limit_seconds",
             "realm_name",
+            "realm_notifications_stream_name",
             "realm_restricted_to_domain",
             "realm_uri",
             "realm_waiting_period_threshold",
