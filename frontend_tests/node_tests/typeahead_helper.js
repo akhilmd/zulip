@@ -5,8 +5,11 @@ set_global('page_params', {realm_is_zephyr_mirror_realm: false});
 add_dependencies({
     stream_data: 'js/stream_data.js',
     people: 'js/people.js',
-    typeahead_helper: 'js/typeahead_helper.js',
     util: 'js/util.js',
+    recent_senders: 'js/recent_senders.js',
+    pm_conversations: 'js/pm_conversations.js',
+    message_store: 'js/message_store.js',
+    typeahead_helper: 'js/typeahead_helper.js',
 });
 
 var popular = {num_items: function () {
@@ -77,17 +80,23 @@ var matches = [
         is_bot: false,
         user_id: 4,
     }, {
+        email: "b_user_3@zulip.net",
+        full_name: "Bob 3",
+        is_admin: false,
+        is_bot: false,
+        user_id: 5,
+    }, {
         email: "b_bot@example.com",
         full_name: "B bot",
         is_admin: false,
         is_bot: true,
-        user_id: 5,
+        user_id: 6,
     }, {
         email: "zman@test.net",
         full_name: "Zman",
         is_admin: false,
         is_bot: false,
-        user_id: 6,
+        user_id: 7,
     },
 ];
 
@@ -96,45 +105,105 @@ _.each(matches, function (person) {
 });
 
 (function test_sort_recipients() {
-    function get_typeahead_result(query, current_stream) {
+    function get_typeahead_result(query, current_stream, current_topic) {
         var result = th.sort_recipients(
             global.people.get_realm_persons(),
             query,
-            current_stream
+            current_stream,
+            current_topic
         );
         return _.map(result, function (person) {
             return person.email;
         });
     }
 
+    // Typeahead for recipientbox [query, "", undefined]
     assert.deepEqual(get_typeahead_result("b", ""), [
         'b_user_1@zulip.net',
         'b_user_2@zulip.net',
+        'b_user_3@zulip.net',
         'b_bot@example.com',
         'a_user@zulip.org',
         'zman@test.net',
         'a_bot@zulip.com',
      ]);
 
-    var subscriber_email = "b_user_2@zulip.net";
-    stream_data.add_subscriber("Dev", people.get_user_id(subscriber_email));
-    assert.deepEqual(get_typeahead_result("b", "Dev"), [
-        subscriber_email,
-        'b_user_1@zulip.net',
-        'b_bot@example.com',
+    // Typeahead for private message [query, "", ""]
+    assert.deepEqual(get_typeahead_result("a", "", ""), [
         'a_user@zulip.org',
-        'zman@test.net',
         'a_bot@zulip.com',
-    ]);
-
-    // No match
-    assert.deepEqual(get_typeahead_result("h", "Linux"), [
-        'a_user@zulip.org',
         'b_user_1@zulip.net',
         'b_user_2@zulip.net',
+        'b_user_3@zulip.net',
         'zman@test.net',
-        'a_bot@zulip.com',
         'b_bot@example.com',
+     ]);
+
+    var subscriber_email_1 = "b_user_2@zulip.net";
+    var subscriber_email_2 = "b_user_3@zulip.net";
+    var subscriber_email_3 = "b_bot@example.com";
+    stream_data.add_subscriber("Dev", people.get_user_id(subscriber_email_1));
+    stream_data.add_subscriber("Dev", people.get_user_id(subscriber_email_2));
+    stream_data.add_subscriber("Dev", people.get_user_id(subscriber_email_3));
+
+    // For spliting based on whether a PM was sent
+    global.pm_conversations.set_partner(5);
+    global.pm_conversations.set_partner(6);
+    global.pm_conversations.set_partner(2);
+    global.pm_conversations.set_partner(7);
+
+    // For splitting based on recency
+    global.recent_senders.process_message_for_senders({
+        sender_id : 7,
+        stream_id : 1,
+        subject : "Dev Topic",
+        timestamp : _.uniqueId(),
+    });
+    global.recent_senders.process_message_for_senders({
+        sender_id : 5,
+        stream_id : 1,
+        subject : "Dev Topic",
+        timestamp : _.uniqueId(),
+    });
+    global.recent_senders.process_message_for_senders({
+        sender_id : 6,
+        stream_id : 1,
+        subject : "Dev Topic",
+        timestamp : _.uniqueId(),
+    });
+
+    // Typeahead for stream message [query, stream-name, topic-name]
+    assert.deepEqual(get_typeahead_result("b", "Dev", "Dev Topic"), [
+        subscriber_email_3,
+        subscriber_email_2,
+        subscriber_email_1,
+        'b_user_1@zulip.net',
+        'zman@test.net',
+        'a_user@zulip.org',
+        'a_bot@zulip.com',
     ]);
 
+    global.recent_senders.process_message_for_senders({
+        sender_id : 5,
+        stream_id : 2,
+        subject : "Linux Topic",
+        timestamp : _.uniqueId(),
+    });
+    global.recent_senders.process_message_for_senders({
+        sender_id : 7,
+        stream_id : 2,
+        subject : "Linux Topic",
+        timestamp : _.uniqueId(),
+    });
+
+    // No match
+    assert.deepEqual(get_typeahead_result("h", "Linux", "Linux Topic"), [
+        'zman@test.net',
+        'b_user_3@zulip.net',
+        'a_user@zulip.org',
+        'b_bot@example.com',
+        'a_bot@zulip.com',
+        'b_user_1@zulip.net',
+        'b_user_2@zulip.net',
+    ]);
 }());
