@@ -271,54 +271,66 @@
 
       // Typeahead Bootstrap version 2.3.2
       if (self.options.typeahead) {
-        var typeahead = self.options.typeahead || {};
+        // Use existing typeahead code from composebox_typeahead.js
 
-        makeOptionFunction(typeahead, 'source');
+        // var typeahead = self.options.typeahead || {};
 
-        self.$input.typeahead($.extend({}, typeahead, {
-          source: function (query, process) {
-            function processItems(items) {
-              var texts = [];
+        // makeOptionFunction(typeahead, 'source');
 
-              for (var i = 0; i < items.length; i++) {
-                var text = self.options.itemText(items[i]);
-                map[text] = items[i];
-                texts.push(text);
-              }
-              process(texts);
-            }
+        // updater to add a new tag instead of return updated value.
+        var old_updater = self.options.typeahead.updater;
+        self.options.typeahead.updater = function (item, event) {
+          var new_item = old_updater(item, event);
+          self.add(new_item);
+        };
 
-            this.map = {};
-            var map = this.map,
-                data = typeahead.source(query);
+        // Actually set the typeahead
+        self.$input.typeahead(self.options.typeahead);
 
-            if ($.isFunction(data.success)) {
-              // support for Angular callbacks
-              data.success(processItems);
-            } else if ($.isFunction(data.then)) {
-              // support for Angular promises
-              data.then(processItems);
-            } else {
-              // support for functions and jquery promises
-              $.when(data)
-               .then(processItems);
-            }
-          },
-          updater: function (text) {
-            self.add(this.map[text]);
-            return this.map[text];
-          },
-          matcher: function (text) {
-            return (text.toLowerCase().indexOf(this.query.trim().toLowerCase()) !== -1);
-          },
-          sorter: function (texts) {
-            return texts.sort();
-          },
-          highlighter: function (text) {
-            var regex = new RegExp( '(' + this.query + ')', 'gi' );
-            return text.replace( regex, "<strong>$1</strong>" );
-          }
-        }));
+        // self.$input.typeahead($.extend({}, typeahead, {
+        //   source: function (query, process) {
+        //     function processItems(items) {
+        //       var texts = [];
+
+        //       for (var i = 0; i < items.length; i++) {
+        //         var text = self.options.itemText(items[i]);
+        //         map[text] = items[i];
+        //         texts.push(text);
+        //       }
+        //       process(texts);
+        //     }
+
+        //     this.map = {};
+        //     var map = this.map,
+        //         data = typeahead.source(query);
+
+        //     if ($.isFunction(data.success)) {
+        //       // support for Angular callbacks
+        //       data.success(processItems);
+        //     } else if ($.isFunction(data.then)) {
+        //       // support for Angular promises
+        //       data.then(processItems);
+        //     } else {
+        //       // support for functions and jquery promises
+        //       $.when(data)
+        //        .then(processItems);
+        //     }
+        //   },
+        //   updater: function (text) {
+        //     self.add(this.map[text]);
+        //     return this.map[text];
+        //   },
+        //   matcher: function (text) {
+        //     return (text.toLowerCase().indexOf(this.query.trim().toLowerCase()) !== -1);
+        //   },
+        //   sorter: function (texts) {
+        //     return texts.sort();
+        //   },
+        //   highlighter: function (text) {
+        //     var regex = new RegExp( '(' + this.query + ')', 'gi' );
+        //     return text.replace( regex, "<strong>$1</strong>" );
+        //   }
+        // }));
       }
 
       // typeahead.js
@@ -351,16 +363,17 @@
         self.$input.focus();
       }, self));
 
-        if (self.options.addOnBlur && self.options.freeInput) {
-          self.$input.on('focusout', $.proxy(function(event) {
-              // HACK: only process on focusout when no typeahead opened, to
-              //       avoid adding the typeahead text as tag
-              if ($('.typeahead, .twitter-typeahead', self.$container).length === 0) {
-                self.add(self.$input.val());
-                self.$input.val('');
-              }
-          }, self));
-        }
+        // Interferes with clicking on value from typeahead
+        // if (self.options.addOnBlur && self.options.freeInput) {
+        //   self.$input.on('focusout', $.proxy(function(event) {
+        //       // HACK: only process on focusout when no typeahead opened, to
+        //       //       avoid adding the typeahead text as tag
+        //       if ($('.typeahead, .twitter-typeahead', self.$container).length === 0) {
+        //         self.add(self.$input.val());
+        //         self.$input.val('');
+        //       }
+        //   }, self));
+        // }
 
 
       self.$container.on('keydown', 'input', $.proxy(function(event) {
