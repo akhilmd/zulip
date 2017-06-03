@@ -84,7 +84,7 @@
     color: #ffffff;
 }
 
-.compose_table .pm_recipient #private_message_recipient {
+.compose_table .pm_recipient #private_message_recipient_dummy {
     margin-left: 4em;
     border-left: none;
     border-radius: 0px 3px 3px 0px;
@@ -336,7 +336,7 @@ input.recipient_box {
     padding-left: 18px;
 }
 
-#private_message_recipient.recipient_box {
+#private_message_recipient_dummy.recipient_box {
     width: 100%;
 }
 

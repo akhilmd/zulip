@@ -116,7 +116,7 @@ function handle_keydown(e) {
         // If no typeaheads are shown...
         if (!($("#subject").data().typeahead.shown ||
               $("#stream").data().typeahead.shown ||
-              $("#private_message_recipient").data().typeahead.shown ||
+              $("#private_message_recipient_dummy > input").data().typeahead.shown ||
               $("#new_message_content").data().typeahead.shown)) {
 
             // If no typeaheads are shown and the user is tabbing from the message content box,
@@ -495,61 +495,71 @@ exports.initialize = function () {
         },
     });
 
-    $( "#private_message_recipient" ).typeahead({
-        source: people.get_all_persons, // This is a function.
-        items: 5,
-        dropup: true,
-        fixed: true,
-        highlighter: function (item) {
-            var query = get_last_recipient_in_pm(this.query);
-            var item_formatted = typeahead_helper.render_person(item);
-            return typeahead_helper.highlight_with_escaping(query, item_formatted);
-        },
-        matcher: function (item) {
-            var current_recipient = get_last_recipient_in_pm(this.query);
-            // If you type just a comma, there won't be any recipients.
-            if (!current_recipient) {
-                return false;
-            }
-            // If the name is only whitespace (does not contain any non-whitespace),
-            // we're between typing names; don't autocomplete anything for us.
-            if (! current_recipient.match(/\S/)) {
-                return false;
-            }
-            var recipients = util.extract_pm_recipients(this.query);
-            if (recipients.indexOf(item.email) > -1) {
-                return false;
-            }
+    $("#private_message_recipient").tagsinput({
+        // this typeahead will be set for "#private_message_recipient > input"
+        typeahead : {
+            source: people.get_all_persons, // This is a function.
+            items: 5,
+            dropup: true,
+            fixed: true,
+            highlighter: function (item) {
+                var query = this.query;
+                var item_formatted = typeahead_helper.render_person(item);
+                return typeahead_helper.highlight_with_escaping(query, item_formatted);
+            },
+            matcher: function (item) {
+                current_recipient = this.query;
+                // If you type just a comma, there won't be any recipients.
+                if (!current_recipient) {
+                    return false;
+                }
+                // If the name is only whitespace (does not contain any non-whitespace),
+                // we're between typing names; don't autocomplete anything for us.
+                if (! current_recipient.match(/\S/)) {
+                    return false;
+                }
 
-            return query_matches_person(current_recipient, item);
+                var recipients = util.extract_pm_recipients($("#private_message_recipient").val());
+                recipients = _.map(recipients, function (recipient) {
+                    return recipient.trim();
+                });
+                if (recipients.indexOf(item.email) > -1) {
+                    return false;
+                }
+
+                return query_matches_person(current_recipient, item);
+            },
+            sorter: function (matches) {
+                var current_stream = compose_state.stream_name();
+                return typeahead_helper.sort_recipientbox_typeahead(
+                    this.query, matches, current_stream);
+            },
+            updater: function (item, event) {
+                // console.log(this.query);
+                var previous_recipients = $("#private_message_recipient").val();
+                // previous_recipients.pop();
+                // previous_recipients = previous_recipients.join(", ");
+                if (previous_recipients.length !== 0) {
+                    previous_recipients += ", ";
+                }
+                if (event && event.type === 'click') {
+                    ui_util.focus_on('private_message_recipient');
+                }
+                return item.email;
+            },
+            stopAdvance: true, // Do not advance to the next field on a tab or enter
         },
-        sorter: function (matches) {
-            var current_stream = compose_state.stream_name();
-            return typeahead_helper.sort_recipientbox_typeahead(
-                this.query, matches, current_stream);
-        },
-        updater: function (item, event) {
-            var previous_recipients = typeahead_helper.get_cleaned_pm_recipients(this.query);
-            previous_recipients.pop();
-            previous_recipients = previous_recipients.join(", ");
-            if (previous_recipients.length !== 0) {
-                previous_recipients += ", ";
-            }
-            if (event && event.type === 'click') {
-                ui_util.focus_on('private_message_recipient');
-            }
-            return previous_recipients + item.email + ", ";
-        },
-        stopAdvance: true, // Do not advance to the next field on a tab or enter
+        freeInput: false,
     });
+
+    // give DOM elements generated by the plugin style
+    var tag_gen_div = $("div.bootstrap-tagsinput");
+    tag_gen_div.addClass("recipient_box");
+    tag_gen_div.attr("id", "private_message_recipient_dummy");
 
     exports.initialize_compose_typeahead("#new_message_content", {mention: true, emoji: true, stream: true, syntax: true});
 
-    $( "#private_message_recipient" ).blur(function () {
-        var val = $(this).val();
-        var recipients = typeahead_helper.get_cleaned_pm_recipients(val);
-        $(this).val(recipients.join(", "));
-    });
+    // $("private_message_recipient").val() is guaranteed by the plugin to have csv
 };
 
 return exports;
