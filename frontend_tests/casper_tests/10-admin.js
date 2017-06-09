@@ -19,6 +19,28 @@ casper.waitForSelector('#settings_overlay_container.show', function () {
     casper.test.assertUrlMatch(/^http:\/\/[^/]+\/#organization/, 'URL suggests we are on organization page');
 });
 
+// Test changing notifications stream
+casper.then(function () {
+    casper.test.info('Changing notifications stream to Verona by filtering with "verona"');
+    casper.click("#id_realm_notifications_stream > a.dropdown-toggle");
+
+    casper.waitUntilVisible('ul.dropdown-menu', function () {
+        casper.sendKeys('.dropdown-search > input[type=text]', 'verona');
+        casper.click(".dropdown-list-body li.stream_name");
+    });
+
+    casper.waitForSelectorTextChange("#realm_notifications_stream_label", function () {
+        casper.test.assertSelectorHasText('#realm_notifications_stream_name',
+                                          '#Verona');
+        casper.click('form.org-settings-form button.button');
+    });
+
+    casper.waitUntilVisible('#admin-realm-notifications-stream-status', function () {
+        casper.test.assertSelectorHasText('#admin-realm-notifications-stream-status',
+                                          'Notifications stream changed!');
+    });
+});
+
 // Test permissions setting
 casper.then(function () {
     casper.click("li[data-section='organization-permissions']");

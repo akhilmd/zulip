@@ -86,6 +86,8 @@ exports.dispatch_normal_event = function dispatch_normal_event(event) {
             if (event.data.authentication_methods !== undefined) {
                 settings_org.populate_auth_methods(event.data.authentication_methods);
             }
+        } else if (event.op === 'update' && event.property === 'notifications_stream_id') {
+            page_params.realm_notifications_stream_id = event.value;
         } else if (event.op === 'update' && event.property === 'default_language') {
             page_params.realm_default_language = event.value;
             settings_org.reset_realm_default_language();
@@ -187,6 +189,11 @@ exports.dispatch_normal_event = function dispatch_normal_event(event) {
                 stream_data.delete_sub(stream.stream_id);
                 settings_streams.remove_default_stream(stream.stream_id);
                 stream_data.remove_default_stream(stream.stream_id);
+                if (page_params.realm_notifications_stream_id === stream.stream_id) {
+                    page_params.realm_notifications_stream_id = -1;
+                    settings_org.update_notifications_stream(
+                        page_params.realm_notifications_stream_id);
+                }
             });
         }
         break;
