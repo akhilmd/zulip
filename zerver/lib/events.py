@@ -439,6 +439,8 @@ def apply_event(state, event, user_profile, include_subscribers):
     elif event['type'] == "realm_filters":
         state['realm_filters'] = event["realm_filters"]
     elif event['type'] == "update_display_settings":
+        if event['setting_name'] == 'disable_wrong_narrow_warning':
+            state['disable_wrong_narrow_warning'] = event["setting"]
         if event['setting_name'] == "twenty_four_hour_time":
             state['twenty_four_hour_time'] = event["setting"]
         if event['setting_name'] == 'left_side_userlist':
